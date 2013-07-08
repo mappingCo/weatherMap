@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+	<title>open weather</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<script type="text/javascript"
+  			src="http://maps.googleapis.com/maps/api/js?sensor=false">
+		</script>
+		<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	  	<script type="text/javascript">
+
+	
+	  		//define las variables globales
+	  		var mapa;
+	  		var opcionesMapa;
+	  		var marcadores = new Array();
+	  		var ventanaInfo = new google.maps.InfoWindow({});
+			
+			var mi_lat= 41.39054;
+			var mi_lon= 2.19141;
+
+			//lee los datos en formato JSON desde openweather
+	  		$.getJSON('http://api.openweathermap.org/data/2.5/weather?lat='+mi_lat+'&lon='+mi_lon+'&lang=sp&cnt=10&callback=?', function(data) { 
+	  			datos=data;
+
+	  		});
+
+
+
+
+			function InicializarMapa() {
+				
+
+
+				//declaramos un objeto de la clase google.maps.LatLng con la posicion del centro del mapa
+			    var centro = new google.maps.LatLng(datos.coord.lat, datos.coord.lon);
+			    
+			    //define las opciones del mapa, el centro, el zoom y el tipo (carreteras:ROADMAP)
+			    opcionesMapa = {
+			        center: centro,
+			        zoom: 12,
+			        mapTypeId: google.maps.MapTypeId.ROADMAP
+			    }
+
+			    mapa = new google.maps.Map(document.getElementById("map_canvas"), opcionesMapa);
+				var temperatura;
+			    //funcion que crea los marcadores en un array y crea un infowindow asociado a cada uno
+			    function cargarMarcadores () {
+			    	//for (var i = datos.length - 1; i >= 0; i--) {
+			    		//selecciona el color de la estación en funcion de su IC
+			    		temperatura = (parseFloat(datos.main.temp)-273.15).toFixed(2);
+
+			    		var posicionEstacion = new google.maps.LatLng(datos.coord.lat, datos.coord.lon);
+			    		var iconTiempo = datos.weather[0].icon;
+
+			    		//describe las propiedades del marcador
+			    		var marcador = new google.maps.Marker ({
+			    			position: posicionEstacion,
+			    			map: mapa,
+			    			//icon: creaCirculo(datos.main.humidity),
+			    			icon: 'http://openweathermap.org/img/w/'+iconTiempo+'.png',
+			    			title: datos.name,
+			    			//crea una nueva propiedad del marcador con los datos que se mostraran en la infowindow
+			    			html: '<p><b>'+datos.name+"</b><br />"+
+			    				'<hr>'
+			    				+'('+ datos.coord.lat +' , '+ datos.coord.lon+ "º)<br />"
+					        	+'Temperatura: '+ temperatura +'ºC , Presion: '+ datos.main.pressure+ " hpa<br />"+
+					        	'humedad: '+ datos.main.humidity +'%<br /> Tiempo: '+datos.weather[0].description+ '<br/>'+
+					        	'veloc viento: '+ datos.wind.speed+ 'm/s, direccion: '+datos.wind.deg+'º</p>'
+			    		});
+			    		
+			    		//crea un evento escucha que dispara la infowindow al hacer click en el marcador
+			    		google.maps.event.addListener(marcador, "click", function(event){
+			    			ventanaInfo.setContent(this.html);
+			    			ventanaInfo.setPosition(posicionEstacion);
+			    			ventanaInfo.open(mapa, this)
+			    		});
+			    		//añade el marcador creado a la array con el resto de marcadores
+			    		marcadores.push(marcador);
+			    		
+			    	//};
+			    }
+			    function datosTiempo() {
+
+			    	$("#posicion").html(datos.coord.lat +' , '+ datos.coord.lon);
+			    	$("#Temperatura").html(temperatura+'ºC');
+			    	$("#Nubes").html('Nubes: '+ datos.clouds.all+'%');
+			    	$("#Tiempo").html(datos.weather[0].description);
+			    	$("#Humedad").html('Humedad '+ datos.main.humidity+'%');
+			    	$("#Viento").html('Viento: '+ datos.wind.speed+'m/s');
+			    	$("#Presion").html('Presión: '+ datos.main.pressure+'hpa');
+
+
+			    }
+
+			    //llama a la funcion que dibuja las estaciones como marcadores en el mapa
+			    cargarMarcadores();
+				datosTiempo();
+
+				//ir a punto definido por el usuario
+				document.getElementById('go').addEventListener('click', goToCoord, false);
+
+				function goToCoord (){
+
+					var cLat =document.getElementById('Latitud').value;
+					var cLon =document.getElementById('Longitud').value;
+					var destino = new google.maps.LatLng(cLat,cLon);
+					
+					marcador.setPosition(destino);
+			        mapa.setCenter(marcador.getPosition());
+			        mapa.setZoom(5);
+
+					
+				}
+
+			}
+
+
+	  	</script>
+	</head>
+	<!--al cargar la pagina se llama a la función que inicializa el mapa de google-->
+	<body onload="InicializarMapa()">
+		<div id='posicion' style="font-size: medium; font-weight: bold; margin-bottom: 0px;"></div> 
+			<div style="float: left; width: 130px;" >
+				<div style="display: block; clear: left;" >
+
+					<div style="float: left;" >
+						<div id='Temperatura' style="display: block; clear: left; font-size: medium; font-weight: bold; padding: 0pt 3pt;" title="Temperatura"></div>
+						<div style="float: left;" title="Titel">
+							<img height="45" width="45" style="border: medium none; width: 45px; height: 45px; background: url(&quot;http://openweathermap.org/img/w/"+datos.weather[0].icon+".png&quot;) repeat scroll 0% 0% transparent;" alt="title" src="http://openweathermap.org/images/transparent.png"/>
+						</div>
+						<div id='Tiempo' style="display: block; clear: left; font-size: medium; font-weight: bold; padding: 0pt 3pt;"></div>
+
+					</div>
+				</div>
+				<div id='Nubes' style="display: block; clear: left; font-size: small;"></div>
+				<div id='Humedad' style="display: block; clear: left; color: gray; font-size: x-small;" ></div>
+				<div id='Viento' style="display: block; clear: left; color: gray; font-size: x-small;" ></div>
+				<div id='Presion' style="display: block; clear: left; color: gray; font-size: x-small;" ></div>
+				
+			</div>
+		<div style="text-align: center;">		
+			<div id="map_canvas" style="width: 800px; height: 500px; margin: 0 auto;"></div>
+			<div>Datos meteorologicos obtenidos de: <a href="http://openweathermap.org/">http://openweathermap.org/</a></div>
+			<br />
+			<h4>Introduce las coordenadas del punto en el que quieres saber el tiempo</h4>
+			<div id="coordenadas" style="">
+		  		Latitud<input id="Latitud" name="Latitud" placeholder="41.3922157">
+		  		Longitud<input id="Longitud" name="Longitud" placeholder="2.2045689">
+		    <button id="go">GO</button>
+
+		  </div>
+		</div>
+		</div>
+	</body>
+</html>
