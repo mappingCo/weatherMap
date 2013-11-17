@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Quick Start Guide Example</title>
+	<meta charset="utf-8" />
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="stylesheet" href="leaftlet-0.6.4/leaflet.css" />
+	<!--[if lte IE 8]><link rel="stylesheet" href="../dist/leaflet.ie.css" /><![endif]-->
+</head>
+<body>
+	<div id="map" style="width: 1000px; height: 600px"></div>
+	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script src="leaftlet-0.6.4/leaflet.js"></script>
+	<script>
+		var mi_lat = 41.2345;
+		var mi_lon = -2.1056;
+		var zoom = 13;
+		var datos;
+
+		console.log(mi_lat+' '+mi_lon)
+
+		//lee los datos en formato JSON desde openweather
+	  	
+	  	$.getJSON('http://api.openweathermap.org/data/2.5/weather?lat='+mi_lat+'&lon='+mi_lon+'&lang=sp', function(data) { 
+	  			datos=data;
+
+	  	});
+	  	console.log(datos);
+	  	var datos ={"coord":{"lon":-2,"lat":41},"sys":{"message":0.005,"country":"ES","sunrise":1384671517,"sunset":1384706855},"weather":[{"id":500,"main":"Rain","description":"lluvia ligera","icon":"10d"}],"base":"gdps stations","main":{"temp":276.054,"temp_min":276.054,"temp_max":276.054,"pressure":903.67,"sea_level":1028.56,"grnd_level":903.67,"humidity":100},"wind":{"speed":1.2,"deg":179.001},"rain":{"3h":0.5},"snow":{"3h":0.25},"clouds":{"all":92},"dt":1384690967,"id":3122806,"name":"Estables","cod":200}
+	  	
+	  	console.log(datos);
+
+		var map = L.map('map').setView([mi_lat, mi_lon], zoom);
+
+
+		L.tileLayer('http://{s}.tile.cloudmade.com/BC9A493B41014CAABB98F0471D759707/997/256/{z}/{x}/{y}.png', {
+			maxZoom: 18,
+			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
+		}).addTo(map);
+
+	    //describe las propiedades del marcador
+		var datosMarker = {
+			title: datos.name,
+			//crea una nueva propiedad del marcador con los datos que se mostraran en la infowindow
+			html: '<p><b>'+datos.name+"</b><br />"+
+				'<hr>'
+				+'('+ datos.coord.lat +' , '+ datos.coord.lon+ "º)<br />"
+	        	+'Temperatura: '+ temperatura +'ºC , Presion: '+ datos.main.pressure+ " hpa<br />"+
+	        	'humedad: '+ datos.main.humidity +'%<br /> Tiempo: '+datos.weather[0].description+ '<br/>'+
+	        	'veloc viento: '+ datos.wind.speed+ 'm/s, direccion: '+datos.wind.deg+'º</p>'
+		};
+		L.marker([datos.coord.lat, datos.coord.lon]).addTo(map)
+			.bindPopup(datosMarker.html).openPopup();
+
+
+		var popup = L.popup();
+
+		function onMapClick(e) {
+			popup
+				.setLatLng(e.latlng)
+				.setContent("You clicked the map at " + e.latlng.toString())
+				.openOn(map);
+		}
+
+		map.on('click', onMapClick);
+
+	</script>
+</body>
+</html>
