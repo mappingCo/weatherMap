@@ -14,23 +14,38 @@
 	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
 	<script src="leaftlet-0.6.4/leaflet.js"></script>
 	<script>
-		var mi_lat = 41.2345;
-		var mi_lon = -2.1056;
+		var mi_lat = 21.175009;
+		var mi_lon = 4.041849;
 		var zoom = 13;
-		var datos;
 
 		console.log(mi_lat+' '+mi_lon)
 
-		//lee los datos en formato JSON desde openweather
-	  	
-	  	$.getJSON('http://api.openweathermap.org/data/2.5/weather?lat='+mi_lat+'&lon='+mi_lon+'&lang=sp', function(data) { 
-	  			datos=data;
+  		var datos;
+  		var temperatura;
 
-	  	});
-	  	console.log(datos);
-	  	var datos ={"coord":{"lon":-2,"lat":41},"sys":{"message":0.005,"country":"ES","sunrise":1384671517,"sunset":1384706855},"weather":[{"id":500,"main":"Rain","description":"lluvia ligera","icon":"10d"}],"base":"gdps stations","main":{"temp":276.054,"temp_min":276.054,"temp_max":276.054,"pressure":903.67,"sea_level":1028.56,"grnd_level":903.67,"humidity":100},"wind":{"speed":1.2,"deg":179.001},"rain":{"3h":0.5},"snow":{"3h":0.25},"clouds":{"all":92},"dt":1384690967,"id":3122806,"name":"Estables","cod":200}
-	  	
-	  	console.log(datos);
+		function buildQuery() {
+	     	var str = "http://api.openweathermap.org/data/2.5/forecast?lat=21.175009&lon=4.041849";
+	        return "select * from json where url ='" + str + "' ";
+	    }
+
+        $.ajax({
+            url: 'http://query.yahooapis.com/v1/public/yql',
+            data: {
+                q: buildQuery(),
+                format: "json"
+            },
+            dataType: "jsonp",
+            success: function (data) {
+                alert(JSON.stringify(data));
+                datosList =data.query.results.json.list[0]
+                datos =data.query.results.json
+            },
+            error: function (data) {
+                consol.log(data);
+            }
+      	});
+	 
+	  	console.log(JSON.stringify(datos));
 
 		var map = L.map('map').setView([mi_lat, mi_lon], zoom);
 
@@ -40,18 +55,20 @@
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>'
 		}).addTo(map);
 
+		temperatura = (parseFloat(datosList.main.temp)-273.15).toFixed(2);
+
 	    //describe las propiedades del marcador
 		var datosMarker = {
-			title: datos.name,
+			title: datos.city.name,
 			//crea una nueva propiedad del marcador con los datos que se mostraran en la infowindow
-			html: '<p><b>'+datos.name+"</b><br />"+
+			html: '<p><b>'+datos.city.name+"</b><br />"+
 				'<hr>'
-				+'('+ datos.coord.lat +' , '+ datos.coord.lon+ "º)<br />"
-	        	+'Temperatura: '+ temperatura +'ºC , Presion: '+ datos.main.pressure+ " hpa<br />"+
-	        	'humedad: '+ datos.main.humidity +'%<br /> Tiempo: '+datos.weather[0].description+ '<br/>'+
-	        	'veloc viento: '+ datos.wind.speed+ 'm/s, direccion: '+datos.wind.deg+'º</p>'
+				+'('+ datos.city.coord.lat +' , '+ datos.city.coord.lon+ "º)<br />"
+	        	+'Temperatura: '+ temperatura +'ºC , Presion: '+ datosList.main.pressure+ " hpa<br />"+
+	        	'humedad: '+ datosList.main.humidity +'%<br /> Tiempo: '+datosList.weather.description+ '<br/>'+
+	        	'veloc viento: '+ datosList.wind.speed+ 'm/s, direccion: '+datosList.wind.deg+'º</p>'
 		};
-		L.marker([datos.coord.lat, datos.coord.lon]).addTo(map)
+		L.marker([datos.city.coord.lat, datos.city.coord.lon]).addTo(map)
 			.bindPopup(datosMarker.html).openPopup();
 
 
